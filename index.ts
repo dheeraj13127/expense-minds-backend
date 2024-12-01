@@ -9,6 +9,7 @@ import http from "http";
 import mongoose from "mongoose";
 import { authRouter } from "./src/routes/auth";
 import dotenv from "dotenv";
+import { userRouter } from "./src/routes/user";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -42,13 +43,15 @@ app.use(
   })
 );
 
+// REST api routes
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 const db = process.env.DATABASE;
 const environment = process.env.NODE_ENV;
-const secret = process.env.JWT_SECRET;
+
 //@ts-ignore
 mongoose.connect(db).then((conn) => {
   console.log("<------- Successfully connected to DB ! ------->");
