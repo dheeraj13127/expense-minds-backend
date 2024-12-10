@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 import { authRouter } from "./src/routes/auth";
 import dotenv from "dotenv";
 import { userRouter } from "./src/routes/user";
+import { recordRouter } from "./src/routes/route";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -46,6 +47,7 @@ app.use(
 // REST api routes
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/record", recordRouter);
 
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
