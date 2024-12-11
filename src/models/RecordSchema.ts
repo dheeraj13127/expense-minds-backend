@@ -18,7 +18,7 @@ const recordSchema = new mongoose.Schema(
     amountType: {
       type: String,
       enum: ["expense", "income"],
-      default: "income",
+      default: "expense",
       required: true,
     },
     account: {

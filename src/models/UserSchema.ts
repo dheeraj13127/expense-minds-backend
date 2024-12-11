@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    currency: {
+      type: mongoose.Schema.ObjectId,
+      ref: "currency",
+    },
   },
   { timestamps: true }
 );

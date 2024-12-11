@@ -10,7 +10,8 @@ import mongoose from "mongoose";
 import { authRouter } from "./src/routes/auth";
 import dotenv from "dotenv";
 import { userRouter } from "./src/routes/user";
-import { recordRouter } from "./src/routes/route";
+import { recordRouter } from "./src/routes/record";
+import { currencyRouter } from "./src/routes/currency";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -48,6 +49,7 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/record", recordRouter);
+app.use("/api/currency", currencyRouter);
 
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;

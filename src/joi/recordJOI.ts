@@ -8,5 +8,5 @@ export const createRecordValidation = Joi.object({
   category: Joi.string().required(),
   amountType: Joi.string().required(),
   account: Joi.string().required(),
-  note: Joi.string(),
+  note: Joi.string().allow(null, ""),
 });
