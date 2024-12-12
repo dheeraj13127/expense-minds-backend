@@ -14,6 +14,42 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "currency",
     },
+    categories: {
+      type: [
+        {
+          categoryName: {
+            type: String,
+            required: true,
+          },
+          categorySymbol: {
+            type: String,
+            required: true,
+          },
+        },
+      ],
+    },
+    accounts: {
+      type: [
+        {
+          groupName: String,
+          subAccounts: [
+            {
+              name: {
+                type: String,
+                required: true,
+              },
+              description: {
+                type: String,
+              },
+              amount: {
+                type: Number,
+                required: true,
+              },
+            },
+          ],
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

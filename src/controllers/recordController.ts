@@ -21,7 +21,6 @@ export const getRecordsByDay = async (req: any, res: any) => {
     let filter = {
       userId: req.user._id,
     };
-
     const recordsByDay = await RecordSchema.aggregate([
       {
         $match: filter,
@@ -38,15 +37,38 @@ export const getRecordsByDay = async (req: any, res: any) => {
       },
       {
         $match: {
-          yearAndMonth: "2024-11",
+          yearAndMonth: "2024-12",
         },
       },
+
       {
         $group: {
-          _id: "$yearAndMonth",
+          _id: "$day",
+          expense: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "expense"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          income: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "income"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
           records: {
             $push: {
-              day: "$day",
+              _id: "$_id",
               amount: "$amount",
               category: "$category",
               amountType: "$amountType",
@@ -57,23 +79,96 @@ export const getRecordsByDay = async (req: any, res: any) => {
         },
       },
       {
-        $unwind: {
-          path: "$records",
-          preserveNullAndEmptyArrays: false,
+        $sort: {
+          _id: 1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalExpenseSum: { $sum: "$expense" },
+          totalIncomeSum: { $sum: "$income" },
+          data: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $addFields: {
+          netTotal: {
+            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
+          },
+        },
+      },
+    ]);
+
+    return res
+      .status(200)
+      .json({ message: "Fetched records successfully", result: recordsByDay });
+  } catch (err) {
+    console.log(err);
+    return res.status(400).json({ message: "Failed to fetch records !" });
+  }
+};
+
+export const getRecordsByMonth = async (req: any, res: any) => {
+  try {
+    let filter = {
+      userId: req.user._id,
+    };
+    const recordsByDay = await RecordSchema.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $addFields: {
+          year: {
+            $dateToString: { format: "%Y", date: "$createdAt" },
+          },
+          yearAndMonth: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+          },
+        },
+      },
+      {
+        $match: {
+          year: "2024",
         },
       },
 
       {
         $group: {
-          _id: "$records.day",
+          _id: "$yearAndMonth",
+          expense: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "expense"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          income: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "income"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
           records: {
             $push: {
-              // day: "$_id",
-              amount: "$records.amount",
-              category: "$records.category",
-              amountType: "$records.amountType",
-              account: "$records.account",
-              note: "$records.note",
+              _id: "$_id",
+              amount: "$amount",
+              category: "$category",
+              amountType: "$amountType",
+              account: "$account",
+              note: "$note",
             },
           },
         },
@@ -83,9 +178,28 @@ export const getRecordsByDay = async (req: any, res: any) => {
           _id: 1,
         },
       },
+      {
+        $group: {
+          _id: null,
+          totalExpenseSum: { $sum: "$expense" },
+          totalIncomeSum: { $sum: "$income" },
+          data: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $addFields: {
+          netTotal: {
+            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
+          },
+        },
+      },
     ]);
-    console.log(recordsByDay);
-    return res.status(200).json({ message: "Fetched records successfully" });
+
+    return res
+      .status(200)
+      .json({ message: "Fetched records successfully", result: recordsByDay });
   } catch (err) {
     console.log(err);
     return res.status(400).json({ message: "Failed to fetch records !" });
