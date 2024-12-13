@@ -4,12 +4,14 @@ import { sign } from "../utils/jwt/jwt";
 import { UserSchema } from "../models/UserSchema";
 import { initialCategoriesData } from "../utils/intialData/initialCategoriesData";
 import { initialAccountsData } from "../utils/intialData/initialAccountsData";
-import mongoose from "mongoose";
 import { CurrencySchema } from "../models/CurrencySchema";
+import mongoose from "mongoose";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const authenticateUser = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { error } = authVerifySchema.validate(req.body);
     if (error) {
@@ -59,13 +61,18 @@ export const authenticateUser = async (req: any, res: any) => {
         },
         { upsert: true }
       );
-      const userToken = sign({ id: newUser._id }, "23h");
+      await session.commitTransaction();
+      const userToken = sign({ id: newUser._id }, "7d");
+
       return res.status(200).json({
         userToken,
         message: "Authenticated Successfully",
       });
     }
   } catch (err) {
+    await session.abortTransaction();
     return res.status(400).json({ message: "Authentication failed !" });
+  } finally {
+    await session.endSession();
   }
 };
