@@ -1,22 +1,31 @@
+import mongoose from "mongoose";
 import { createRecordValidation } from "../joi/recordJOI";
 import { RecordSchema } from "../models/RecordSchema";
 
 export const createNewRecord = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { error } = createRecordValidation.validate(req.body.data);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
     const newRecord = await RecordSchema.create(req.body.data);
+    await session.commitTransaction();
     return res
       .status(200)
       .json({ message: "New record created", record: newRecord });
   } catch (err) {
+    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to create new record !" });
+  } finally {
+    await session.endSession();
   }
 };
 
 export const getRecordsByDay = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     let filter = {
       userId: req.user._id,
@@ -101,17 +110,21 @@ export const getRecordsByDay = async (req: any, res: any) => {
         },
       },
     ]);
-
+    await session.commitTransaction();
     return res
       .status(200)
       .json({ message: "Fetched records successfully", result: recordsByDay });
   } catch (err) {
-    console.log(err);
+    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
+  } finally {
+    await session.endSession();
   }
 };
 
 export const getRecordsByMonth = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     let filter = {
       userId: req.user._id,
@@ -196,12 +209,14 @@ export const getRecordsByMonth = async (req: any, res: any) => {
         },
       },
     ]);
-
+    await session.commitTransaction();
     return res
       .status(200)
       .json({ message: "Fetched records successfully", result: recordsByDay });
   } catch (err) {
-    console.log(err);
+    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
+  } finally {
+    await session.endSession();
   }
 };
