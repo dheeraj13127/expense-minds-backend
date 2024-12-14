@@ -24,6 +24,7 @@ export const createNewRecord = async (req: any, res: any) => {
 };
 
 export const getRecordsByDay = async (req: any, res: any) => {
+  const { day } = req.body;
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -46,7 +47,7 @@ export const getRecordsByDay = async (req: any, res: any) => {
       },
       {
         $match: {
-          yearAndMonth: "2024-12",
+          yearAndMonth: day,
         },
       },
 
@@ -123,6 +124,7 @@ export const getRecordsByDay = async (req: any, res: any) => {
 };
 
 export const getRecordsByMonth = async (req: any, res: any) => {
+  const { month } = req.body;
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -145,7 +147,7 @@ export const getRecordsByMonth = async (req: any, res: any) => {
       },
       {
         $match: {
-          year: "2024",
+          year: month,
         },
       },
 
