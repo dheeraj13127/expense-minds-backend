@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import { createRecordValidation } from "../joi/recordJOI";
+import {
+  createRecordValidation,
+  getRecordByDayValidation,
+  getRecordByMonthValidation,
+} from "../joi/recordJOI";
 import { RecordSchema } from "../models/RecordSchema";
 
 export const createNewRecord = async (req: any, res: any) => {
@@ -24,10 +28,14 @@ export const createNewRecord = async (req: any, res: any) => {
 };
 
 export const getRecordsByDay = async (req: any, res: any) => {
-  const { day } = req.body;
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const { day } = req.query;
+    const { error } = getRecordByDayValidation.validate(req.query);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
     let filter = {
       userId: req.user._id,
     };
@@ -124,10 +132,14 @@ export const getRecordsByDay = async (req: any, res: any) => {
 };
 
 export const getRecordsByMonth = async (req: any, res: any) => {
-  const { month } = req.body;
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const { month } = req.query;
+    const { error } = getRecordByMonthValidation.validate(req.query);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
     let filter = {
       userId: req.user._id,
     };

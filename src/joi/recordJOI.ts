@@ -10,3 +10,11 @@ export const createRecordValidation = Joi.object({
   account: Joi.string().required(),
   note: Joi.string().allow(null, ""),
 });
+
+export const getRecordByDayValidation = Joi.object({
+  day: Joi.string().required(),
+});
+
+export const getRecordByMonthValidation = Joi.object({
+  month: Joi.string().required(),
+});
