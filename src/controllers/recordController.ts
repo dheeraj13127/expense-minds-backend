@@ -15,11 +15,13 @@ export const createNewRecord = async (req: any, res: any) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const newRecord = await RecordSchema.create(req.body.data);
+
     await session.commitTransaction();
     return res
       .status(200)
       .json({ message: "New record created", record: newRecord });
   } catch (err) {
+    console.log(err);
     await session.abortTransaction();
     return res.status(400).json({ message: "Failed to create new record !" });
   } finally {
@@ -58,7 +60,11 @@ export const getRecordsByDay = async (req: any, res: any) => {
           yearAndMonth: day,
         },
       },
-
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
       {
         $group: {
           _id: "$day",
@@ -98,7 +104,7 @@ export const getRecordsByDay = async (req: any, res: any) => {
       },
       {
         $sort: {
-          _id: 1,
+          _id: -1,
         },
       },
       {
@@ -143,7 +149,21 @@ export const getRecordsByMonth = async (req: any, res: any) => {
     let filter = {
       userId: req.user._id,
     };
-    const recordsByDay = await RecordSchema.aggregate([
+    const monthsRange = [
+      "01",
+      "02",
+      "03",
+      "04",
+      "05",
+      "06",
+      "07",
+      "08",
+      "09",
+      "10",
+      "11",
+      "12",
+    ];
+    const recordsByMonth = await RecordSchema.aggregate([
       {
         $match: filter,
       },
@@ -152,8 +172,9 @@ export const getRecordsByMonth = async (req: any, res: any) => {
           year: {
             $dateToString: { format: "%Y", date: "$createdAt" },
           },
-          yearAndMonth: {
-            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+
+          exactMonth: {
+            $dateToString: { format: "%m", date: "$createdAt" },
           },
         },
       },
@@ -162,10 +183,16 @@ export const getRecordsByMonth = async (req: any, res: any) => {
           year: month,
         },
       },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
 
       {
         $group: {
-          _id: "$yearAndMonth",
+          _id: "$exactMonth",
+
           expense: {
             $sum: {
               $cond: [
@@ -188,6 +215,7 @@ export const getRecordsByMonth = async (req: any, res: any) => {
               ],
             },
           },
+
           records: {
             $push: {
               _id: "$_id",
@@ -202,9 +230,10 @@ export const getRecordsByMonth = async (req: any, res: any) => {
       },
       {
         $sort: {
-          _id: 1,
+          _id: -1,
         },
       },
+
       {
         $group: {
           _id: null,
@@ -217,6 +246,46 @@ export const getRecordsByMonth = async (req: any, res: any) => {
       },
       {
         $addFields: {
+          missingMonths: {
+            $filter: {
+              input: monthsRange,
+              as: "missingMonth",
+              cond: { $not: { $in: ["$$missingMonth", "$data._id"] } },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          data: {
+            $concatArrays: [
+              {
+                $map: {
+                  input: "$missingMonths",
+                  as: "month",
+                  in: {
+                    _id: "$$month",
+                    expense: 0,
+                    income: 0,
+                    records: [],
+                  },
+                },
+              },
+              "$data",
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          totalExpenseSum: 1,
+          totalIncomeSum: 1,
+          data: 1,
+        },
+      },
+      {
+        $addFields: {
           netTotal: {
             $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
           },
@@ -224,10 +293,12 @@ export const getRecordsByMonth = async (req: any, res: any) => {
       },
     ]);
     await session.commitTransaction();
-    return res
-      .status(200)
-      .json({ message: "Fetched records successfully", result: recordsByDay });
+    return res.status(200).json({
+      message: "Fetched records successfully",
+      result: recordsByMonth,
+    });
   } catch (err) {
+    console.log(err);
     await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
   } finally {
