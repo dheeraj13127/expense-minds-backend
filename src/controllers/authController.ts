@@ -26,7 +26,7 @@ export const authenticateUser = async (req: any, res: any) => {
     const name = ticket.getPayload()?.name;
     let existingUser = await UserSchema.findOne({ email, name });
     if (existingUser) {
-      const userToken = sign({ id: existingUser._id }, "23h");
+      const userToken = sign({ id: existingUser._id }, "7d");
       return res.status(200).json({
         userToken,
         message: "Authenticated Successfully",

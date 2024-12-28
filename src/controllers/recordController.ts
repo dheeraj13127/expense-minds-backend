@@ -277,6 +277,16 @@ export const getRecordsByMonth = async (req: any, res: any) => {
         },
       },
       {
+        $addFields: {
+          data: {
+            $sortArray: {
+              input: "$data",
+              sortBy: { _id: -1 },
+            },
+          },
+        },
+      },
+      {
         $project: {
           _id: 1,
           totalExpenseSum: 1,
