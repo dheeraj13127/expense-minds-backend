@@ -18,3 +18,7 @@ export const getRecordByDayValidation = Joi.object({
 export const getRecordByMonthValidation = Joi.object({
   month: Joi.string().required(),
 });
+
+export const getRecordBySummaryValidation = Joi.object({
+  day: Joi.string().required(),
+});

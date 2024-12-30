@@ -3,6 +3,7 @@ import {
   createRecordValidation,
   getRecordByDayValidation,
   getRecordByMonthValidation,
+  getRecordBySummaryValidation,
 } from "../joi/recordJOI";
 import { RecordSchema } from "../models/RecordSchema";
 
@@ -309,6 +310,112 @@ export const getRecordsByMonth = async (req: any, res: any) => {
     });
   } catch (err) {
     console.log(err);
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to fetch records !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const getRecordsBySummary = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { day } = req.query;
+    const { error } = getRecordBySummaryValidation.validate(req.query);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    let filter = {
+      userId: req.user._id,
+    };
+    const recordsByDay = await RecordSchema.aggregate([
+      {
+        $match: filter,
+      },
+      {
+        $addFields: {
+          yearAndMonth: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+          },
+        },
+      },
+      {
+        $match: {
+          yearAndMonth: day,
+        },
+      },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: "$account",
+          expense: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "expense"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          income: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "income"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          records: {
+            $push: {
+              _id: "$_id",
+              amount: "$amount",
+              category: "$category",
+              amountType: "$amountType",
+              account: "$account",
+              note: "$note",
+            },
+          },
+        },
+      },
+
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalExpenseSum: { $sum: "$expense" },
+          totalIncomeSum: { $sum: "$income" },
+          data: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $addFields: {
+          netTotal: {
+            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
+          },
+        },
+      },
+    ]);
+    await session.commitTransaction();
+    return res
+      .status(200)
+      .json({ message: "Fetched records successfully", result: recordsByDay });
+  } catch (err) {
     await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
   } finally {
