@@ -22,3 +22,12 @@ export const getRecordByMonthValidation = Joi.object({
 export const getRecordBySummaryValidation = Joi.object({
   day: Joi.string().required(),
 });
+
+export const updatedRecordValidation = Joi.object({
+  _id: Joi.string().required(),
+  amount: Joi.number().required(),
+  category: Joi.string().required(),
+  amountType: Joi.string().required(),
+  account: Joi.string().required(),
+  note: Joi.string().allow(null, ""),
+});

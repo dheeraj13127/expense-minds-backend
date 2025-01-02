@@ -4,6 +4,7 @@ import {
   getRecordByDayValidation,
   getRecordByMonthValidation,
   getRecordBySummaryValidation,
+  updatedRecordValidation,
 } from "../joi/recordJOI";
 import { RecordSchema } from "../models/RecordSchema";
 
@@ -329,7 +330,7 @@ export const getRecordsBySummary = async (req: any, res: any) => {
     let filter = {
       userId: req.user._id,
     };
-    const recordsByDay = await RecordSchema.aggregate([
+    const recordsBySumary = await RecordSchema.aggregate([
       {
         $match: filter,
       },
@@ -412,9 +413,153 @@ export const getRecordsBySummary = async (req: any, res: any) => {
       },
     ]);
     await session.commitTransaction();
-    return res
-      .status(200)
-      .json({ message: "Fetched records successfully", result: recordsByDay });
+    return res.status(200).json({
+      message: "Fetched records successfully",
+      result: recordsBySumary,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to fetch records !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const updateIndividualRecord = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  const { _id, amount, category, amountType, account, note } = req.body.data;
+  try {
+    const { error } = updatedRecordValidation.validate(req.body.data);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const updatedRecord = await RecordSchema.findOneAndUpdate(
+      {
+        userId: req.user._id,
+        _id: _id,
+      },
+      {
+        amount,
+        category,
+        amountType,
+        account,
+        note,
+      },
+      { upsert: true, new: true }
+    );
+
+    const filterDate = new Date(updatedRecord.createdAt);
+    const year = filterDate.getFullYear();
+    const month = (filterDate.getMonth() + 1).toString();
+    const updatedMonth = month.length <= 1 ? "0" + month : month;
+    let day = `${year}-${updatedMonth}`;
+    const latestRecords = await RecordSchema.aggregate([
+      {
+        $match: {
+          userId: req.user._id,
+        },
+      },
+      {
+        $addFields: {
+          yearAndMonth: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+          },
+          day: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+        },
+      },
+      {
+        $match: {
+          yearAndMonth: day,
+        },
+      },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: "$day",
+          expense: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "expense"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          income: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "income"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          records: {
+            $push: {
+              _id: "$_id",
+              amount: "$amount",
+              category: "$category",
+              amountType: "$amountType",
+              account: "$account",
+              note: "$note",
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalExpenseSum: { $sum: "$expense" },
+          totalIncomeSum: { $sum: "$income" },
+          data: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $addFields: {
+          netTotal: {
+            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
+          },
+          filteredData: {
+            $filter: {
+              input: "$data",
+              as: "item",
+              cond: { $eq: ["$$item._id", "2025-01-01"] },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          data: "$filteredData",
+          totalIncomeSum: 1,
+          totalExpenseSum: 1,
+          netTotal: 1,
+        },
+      },
+    ]);
+    await session.commitTransaction();
+    return res.status(200).json({
+      message: "Updated record successfully",
+      records: latestRecords[0],
+    });
   } catch (err) {
     await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });

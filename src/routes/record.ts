@@ -4,6 +4,7 @@ import {
   getRecordsByDay,
   getRecordsByMonth,
   getRecordsBySummary,
+  updateIndividualRecord,
 } from "../controllers/recordController";
 import { protect } from "../utils/protect/protect";
 
@@ -14,5 +15,5 @@ recordRouter.post("/create", createNewRecord);
 recordRouter.get("/getRecords/day", getRecordsByDay);
 recordRouter.get("/getRecords/month", getRecordsByMonth);
 recordRouter.get("/getRecords/summary", getRecordsBySummary);
-
+recordRouter.put("/update", updateIndividualRecord);
 export { recordRouter };
