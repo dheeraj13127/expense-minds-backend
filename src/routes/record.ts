@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createNewRecord,
+  deleteIndividualRecord,
   getRecordsByDay,
   getRecordsByMonth,
   getRecordsBySummary,
@@ -16,4 +17,5 @@ recordRouter.get("/getRecords/day", getRecordsByDay);
 recordRouter.get("/getRecords/month", getRecordsByMonth);
 recordRouter.get("/getRecords/summary", getRecordsBySummary);
 recordRouter.put("/update", updateIndividualRecord);
+recordRouter.delete("/delete", deleteIndividualRecord);
 export { recordRouter };

@@ -1,12 +1,33 @@
 import mongoose from "mongoose";
 import {
   createRecordValidation,
+  deleteRecordValidation,
   getRecordByDayValidation,
   getRecordByMonthValidation,
   getRecordBySummaryValidation,
   updatedRecordValidation,
 } from "../joi/recordJOI";
 import { RecordSchema } from "../models/RecordSchema";
+import { recordsType } from "../interfaces/recordsInterface";
+import {
+  getLatestRecordsForDaily,
+  getLatestRecordsForMonthly,
+} from "../utils/recordHelpers/recordHelpers";
+
+const monthsRange = [
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+];
 
 export const createNewRecord = async (req: any, res: any) => {
   const session = await mongoose.startSession();
@@ -151,20 +172,7 @@ export const getRecordsByMonth = async (req: any, res: any) => {
     let filter = {
       userId: req.user._id,
     };
-    const monthsRange = [
-      "01",
-      "02",
-      "03",
-      "04",
-      "05",
-      "06",
-      "07",
-      "08",
-      "09",
-      "10",
-      "11",
-      "12",
-    ];
+
     const recordsByMonth = await RecordSchema.aggregate([
       {
         $match: filter,
@@ -428,9 +436,11 @@ export const getRecordsBySummary = async (req: any, res: any) => {
 export const updateIndividualRecord = async (req: any, res: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  const { _id, amount, category, amountType, account, note } = req.body.data;
+  const { _id, amount, category, amountType, account, note, recordType } =
+    req.body.data;
   try {
     const { error } = updatedRecordValidation.validate(req.body.data);
+
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
@@ -452,112 +462,80 @@ export const updateIndividualRecord = async (req: any, res: any) => {
     const filterDate = new Date(updatedRecord.createdAt);
     const year = filterDate.getFullYear();
     const month = (filterDate.getMonth() + 1).toString();
+    const date = filterDate.getDate().toString();
     const updatedMonth = month.length <= 1 ? "0" + month : month;
+    const updatedDate = date.length <= 1 ? "0" + date : date;
     let day = `${year}-${updatedMonth}`;
-    const latestRecords = await RecordSchema.aggregate([
-      {
-        $match: {
-          userId: req.user._id,
-        },
-      },
-      {
-        $addFields: {
-          yearAndMonth: {
-            $dateToString: { format: "%Y-%m", date: "$createdAt" },
-          },
-          day: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
-          },
-        },
-      },
-      {
-        $match: {
-          yearAndMonth: day,
-        },
-      },
-      {
-        $sort: {
-          _id: -1,
-        },
-      },
-      {
-        $group: {
-          _id: "$day",
-          expense: {
-            $sum: {
-              $cond: [
-                {
-                  $eq: ["$amountType", "expense"],
-                },
-                "$amount",
-                0,
-              ],
-            },
-          },
-          income: {
-            $sum: {
-              $cond: [
-                {
-                  $eq: ["$amountType", "income"],
-                },
-                "$amount",
-                0,
-              ],
-            },
-          },
-          records: {
-            $push: {
-              _id: "$_id",
-              amount: "$amount",
-              category: "$category",
-              amountType: "$amountType",
-              account: "$account",
-              note: "$note",
-            },
-          },
-        },
-      },
-      {
-        $sort: {
-          _id: -1,
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          totalExpenseSum: { $sum: "$expense" },
-          totalIncomeSum: { $sum: "$income" },
-          data: {
-            $push: "$$ROOT",
-          },
-        },
-      },
-      {
-        $addFields: {
-          netTotal: {
-            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
-          },
-          filteredData: {
-            $filter: {
-              input: "$data",
-              as: "item",
-              cond: { $eq: ["$$item._id", "2025-01-01"] },
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          data: "$filteredData",
-          totalIncomeSum: 1,
-          totalExpenseSum: 1,
-          netTotal: 1,
-        },
-      },
-    ]);
+    let latestRecords: recordsType[];
+    if (recordType === "daily") {
+      latestRecords = await getLatestRecordsForDaily(
+        req.user._id,
+        year,
+        updatedMonth,
+        updatedDate,
+        day
+      );
+    } else {
+      latestRecords = await getLatestRecordsForMonthly(
+        req.user._id,
+        year,
+        updatedMonth
+      );
+    }
     await session.commitTransaction();
+
     return res.status(200).json({
       message: "Updated record successfully",
+      records: latestRecords[0],
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to fetch records !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const deleteIndividualRecord = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  const { id, recordType } = req.query;
+  try {
+    const { error } = deleteRecordValidation.validate(req.query);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const deletedRecord = await RecordSchema.findOneAndDelete({
+      userId: req.user._id,
+      _id: id,
+    });
+    //@ts-ignore
+    const filterDate = new Date(deletedRecord?.createdAt);
+    const year = filterDate.getFullYear();
+    const month = (filterDate.getMonth() + 1).toString();
+    const date = filterDate.getDate().toString();
+    const updatedMonth = month.length <= 1 ? "0" + month : month;
+    const updatedDate = date.length <= 1 ? "0" + date : date;
+    let day = `${year}-${updatedMonth}`;
+    let latestRecords: recordsType[];
+    if (recordType === "daily") {
+      latestRecords = await getLatestRecordsForDaily(
+        req.user._id,
+        year,
+        updatedMonth,
+        updatedDate,
+        day
+      );
+    } else {
+      latestRecords = await getLatestRecordsForMonthly(
+        req.user._id,
+        year,
+        updatedMonth
+      );
+    }
+    await session.commitTransaction();
+    return res.status(200).json({
+      message: "Deleted record successfully",
       records: latestRecords[0],
     });
   } catch (err) {

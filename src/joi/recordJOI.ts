@@ -30,4 +30,10 @@ export const updatedRecordValidation = Joi.object({
   amountType: Joi.string().required(),
   account: Joi.string().required(),
   note: Joi.string().allow(null, ""),
+  recordType: Joi.string().required(),
+});
+
+export const deleteRecordValidation = Joi.object({
+  id: Joi.string().required(),
+  recordType: Joi.string().required(),
 });
