@@ -1,6 +1,6 @@
 import { InitialCategoriesDataType } from "../../interfaces/initialDataInterface";
 
-export const initialCategoriesData: InitialCategoriesDataType[] = [
+export const initialExpenseCategoriesData: InitialCategoriesDataType[] = [
   {
     categoryName: "Food",
     categorySymbol: "🍲",
@@ -64,6 +64,29 @@ export const initialCategoriesData: InitialCategoriesDataType[] = [
   {
     categoryName: "Shopping",
     categorySymbol: "🛍️",
+  },
+  {
+    categoryName: "Other",
+    categorySymbol: "❕",
+  },
+];
+
+export const initialIncomeCategoriesData: InitialCategoriesDataType[] = [
+  {
+    categoryName: "Allowance",
+    categorySymbol: "🤑",
+  },
+  {
+    categoryName: "Salary",
+    categorySymbol: "💰",
+  },
+  {
+    categoryName: "Petty Cash",
+    categorySymbol: "💵",
+  },
+  {
+    categoryName: "Bonus",
+    categorySymbol: "🏅",
   },
   {
     categoryName: "Other",

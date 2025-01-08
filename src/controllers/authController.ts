@@ -2,7 +2,10 @@ import { OAuth2Client } from "google-auth-library";
 import { authVerifySchema } from "../joi/authJOI";
 import { sign } from "../utils/jwt/jwt";
 import { UserSchema } from "../models/UserSchema";
-import { initialCategoriesData } from "../utils/intialData/initialCategoriesData";
+import {
+  initialExpenseCategoriesData,
+  initialIncomeCategoriesData,
+} from "../utils/intialData/initialCategoriesData";
 import { initialAccountsData } from "../utils/intialData/initialAccountsData";
 import { CurrencySchema } from "../models/CurrencySchema";
 import mongoose from "mongoose";
@@ -50,7 +53,10 @@ export const authenticateUser = async (req: any, res: any) => {
       const addUserCategories = await UserSchema.updateOne(
         { _id: newUser._id },
         {
-          $push: { categories: { $each: initialCategoriesData } },
+          $push: {
+            "categories.expense": { $each: initialExpenseCategoriesData },
+            "categories.income": { $each: initialIncomeCategoriesData },
+          },
         },
         { upsert: true }
       );

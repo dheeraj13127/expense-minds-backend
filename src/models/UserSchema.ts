@@ -15,18 +15,32 @@ const userSchema = new mongoose.Schema(
       ref: "currency",
     },
     categories: {
-      type: [
-        {
-          categoryName: {
-            type: String,
-            required: true,
+      type: {
+        expense: [
+          {
+            categoryName: {
+              type: String,
+              required: true,
+            },
+            categorySymbol: {
+              type: String,
+              required: true,
+            },
           },
-          categorySymbol: {
-            type: String,
-            required: true,
+        ],
+        income: [
+          {
+            categoryName: {
+              type: String,
+              required: true,
+            },
+            categorySymbol: {
+              type: String,
+              required: true,
+            },
           },
-        },
-      ],
+        ],
+      },
     },
     accounts: {
       type: [
