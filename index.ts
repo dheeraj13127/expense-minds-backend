@@ -12,6 +12,7 @@ import dotenv from "dotenv";
 import { userRouter } from "./src/routes/user";
 import { recordRouter } from "./src/routes/record";
 import { currencyRouter } from "./src/routes/currency";
+import { statisticsRouter } from "./src/routes/statistics";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -50,6 +51,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/record", recordRouter);
 app.use("/api/currency", currencyRouter);
+app.use("/api/statistics", statisticsRouter);
 
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
