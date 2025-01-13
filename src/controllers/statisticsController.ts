@@ -83,13 +83,6 @@ export const getStatisticsMonthly = async (req: any, res: any) => {
       },
       {
         $addFields: {
-          netTotal: {
-            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
-          },
-        },
-      },
-      {
-        $addFields: {
           data: {
             $map: {
               input: "$data",
@@ -132,22 +125,26 @@ export const getStatisticsMonthly = async (req: any, res: any) => {
                     0,
                   ],
                 },
-                records: "$$item.records",
               },
             },
           },
         },
       },
       {
-        $project: {
-          _id: 1,
-          totalExpenseSum: 1,
-          totalIncomeSum: 1,
-          data: {
-            _id: 1,
-            expense: 1,
-            income: 1,
-            percentage: 1,
+        $addFields: {
+          labels: {
+            $map: {
+              input: "$data",
+              as: "item",
+              in: "$$item._id",
+            },
+          },
+          percentages: {
+            $map: {
+              input: "$data",
+              as: "item",
+              in: "$$item.percentage",
+            },
           },
         },
       },
