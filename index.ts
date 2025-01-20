@@ -13,6 +13,7 @@ import { userRouter } from "./src/routes/user";
 import { recordRouter } from "./src/routes/record";
 import { currencyRouter } from "./src/routes/currency";
 import { statisticsRouter } from "./src/routes/statistics";
+import { settingsRouter } from "./src/routes/settings";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -52,6 +53,7 @@ app.use("/api/user", userRouter);
 app.use("/api/record", recordRouter);
 app.use("/api/currency", currencyRouter);
 app.use("/api/statistics", statisticsRouter);
+app.use("/api/settings", settingsRouter);
 
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
