@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
 import {
   createCategoryValidation,
+  createSubAccountValidation,
   deleteCategoryValidation,
+  deleteSubAccountValidation,
   updateCategoryValidation,
+  updateSubAccountValidation,
 } from "../joi/settingsJOI";
 import { UserSchema } from "../models/UserSchema";
 
@@ -172,6 +175,131 @@ export const deleteCategory = async (req: any, res: any) => {
     console.log(err);
     await session.abortTransaction();
     return res.status(400).json({ message: "Failed to delete category !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const createSubAccount = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { groupId, name, description, amount } = req.body.data;
+    const { error } = createSubAccountValidation.validate(req.body.data);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const createdSubAccount = await UserSchema.findOneAndUpdate(
+      {
+        _id: req.user._id,
+        "accounts._id": groupId,
+      },
+      {
+        $push: {
+          "accounts.$.subAccounts": {
+            name,
+            description,
+            amount,
+          },
+        },
+      },
+      { new: true, upsert: true }
+    );
+
+    await session.commitTransaction();
+    return res.status(200).json({
+      message: "Created sub account successfully",
+      result: createdSubAccount.accounts,
+    });
+  } catch (err) {
+    console.log(err);
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to create sub account !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const updateSubAccount = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { _id, groupId, name, description, amount } = req.body.data;
+    const { error } = updateSubAccountValidation.validate(req.body.data);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const updatedSubAccount = await UserSchema.findOneAndUpdate(
+      {
+        _id: req.user._id,
+        "accounts._id": groupId,
+        "accounts.subAccounts._id": _id,
+      },
+      {
+        $set: {
+          "accounts.$[acc].subAccounts.$[subAcc].name": name,
+          "accounts.$[acc].subAccounts.$[subAcc].description": description,
+          "accounts.$[acc].subAccounts.$[subAcc].amount": amount,
+        },
+      },
+      {
+        arrayFilters: [{ "acc._id": groupId }, { "subAcc._id": _id }],
+        new: true,
+        upsert: true,
+      }
+    );
+
+    await session.commitTransaction();
+    return res.status(200).json({
+      message: "Updated sub account successfully",
+      result: updatedSubAccount.accounts
+        .find((acc) => acc._id.toHexString() === groupId)
+        ?.subAccounts.find((subAcc) => subAcc._id.toHexString() === _id),
+    });
+  } catch (err) {
+    console.log(err);
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to update sub account !" });
+  } finally {
+    await session.endSession();
+  }
+};
+
+export const deleteSubAccount = async (req: any, res: any) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const { id, groupId } = req.query;
+    const { error } = deleteSubAccountValidation.validate(req.query);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    await UserSchema.findOneAndUpdate(
+      {
+        _id: req.user._id,
+        "accounts._id": groupId,
+        "accounts.subAccounts._id": id,
+      },
+      {
+        $pull: {
+          "accounts.$.subAccounts": {
+            _id: id,
+          },
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    await session.commitTransaction();
+    return res.status(200).json({
+      message: "Deleted sub account successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    await session.abortTransaction();
+    return res.status(400).json({ message: "Failed to delete sub account !" });
   } finally {
     await session.endSession();
   }

@@ -46,4 +46,34 @@ export const initialAccountsData: InitialAccountsDataType[] = [
       },
     ],
   },
+  {
+    groupName: "Insurance",
+    subAccounts: [
+      {
+        name: "Bike Insurance",
+        description: "",
+        amount: 0.0,
+      },
+    ],
+  },
+  {
+    groupName: "Investments",
+    subAccounts: [
+      {
+        name: "Mutual Fund",
+        description: "",
+        amount: 0.0,
+      },
+    ],
+  },
+  {
+    groupName: "Others",
+    subAccounts: [
+      {
+        name: "Crypto",
+        description: "",
+        amount: 0.0,
+      },
+    ],
+  },
 ];
