@@ -33,16 +33,30 @@ export const createNewRecord = async (req: any, res: any) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
+    const { userId, amount, category, amountType, account, note, createdAt } =
+      req.body.data;
     const { error } = createRecordValidation.validate(req.body.data);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    const newRecord = await RecordSchema.create(req.body.data);
+    const newRecord = await RecordSchema.create({
+      userId,
+      amount,
+      category,
+      amountType,
+      account,
+      note,
+    });
+    const updatedRecord = await RecordSchema.findByIdAndUpdate(
+      { _id: newRecord._id },
+      { createdAt: createdAt },
+      { new: true, upsert: true }
+    );
 
     await session.commitTransaction();
     return res
       .status(200)
-      .json({ message: "New record created", record: newRecord });
+      .json({ message: "New record created", record: updatedRecord });
   } catch (err) {
     console.log(err);
     await session.abortTransaction();

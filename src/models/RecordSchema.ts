@@ -28,8 +28,12 @@ const recordSchema = new mongoose.Schema(
     note: {
       type: String,
     },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  { timestamps: true }
+  { timestamps: { createdAt: false, updatedAt: true } }
 );
 
 const RecordSchema = mongoose.model("record", recordSchema);

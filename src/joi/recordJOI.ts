@@ -9,6 +9,7 @@ export const createRecordValidation = Joi.object({
   amountType: Joi.string().required(),
   account: Joi.string().required(),
   note: Joi.string().allow(null, ""),
+  createdAt: Joi.date().required(),
 });
 
 export const getRecordByDayValidation = Joi.object({
