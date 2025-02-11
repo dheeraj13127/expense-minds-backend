@@ -3,3 +3,7 @@ declare module "cors";
 declare module "body-parser";
 declare module "express";
 declare module "jsonwebtoken";
+declare module "express-fileupload";
+declare module "mustache";
+declare module "multer";
+declare module "@huggingface/inference";

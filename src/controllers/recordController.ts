@@ -13,6 +13,7 @@ import {
   getLatestRecordsForDaily,
   getLatestRecordsForMonthly,
 } from "../utils/recordHelpers/recordHelpers";
+import { openAiModel } from "../..";
 
 const monthsRange = [
   "01",
@@ -162,7 +163,9 @@ export const getRecordsByDay = async (req: any, res: any) => {
         },
       },
     ]);
+
     await session.commitTransaction();
+
     return res
       .status(200)
       .json({ message: "Fetched records successfully", result: recordsByDay });
