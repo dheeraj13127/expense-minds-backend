@@ -19,7 +19,10 @@ import fileUpload from "express-fileupload";
 import { automatedRouter } from "./src/routes/automated";
 import { OpenAI } from "openai";
 import { OpenAIEmbeddings } from "@langchain/openai";
-
+import { Server, Socket } from "socket.io";
+import { authenticateSocketUser } from "./src/controllers/userController";
+import { createConversation, dmUser } from "./src/controllers/socketController";
+import { chatRouter } from "./src/routes/chat";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -63,6 +66,7 @@ app.use("/api/currency", currencyRouter);
 app.use("/api/statistics", statisticsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/automated", automatedRouter);
+app.use("/api/chat", chatRouter);
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 const db = process.env.DATABASE;
@@ -92,6 +96,24 @@ const embeddings = new OpenAIEmbeddings({
   model: "text-embedding-3-large",
 });
 
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    methods: ["GET", "POST"],
+  },
+});
+
+io.use(authenticateSocketUser).on("connection", (socket: Socket) => {
+  socket.on("create-conversation", createConversation(socket, io));
+  socket.on("dm-user", dmUser(socket, io));
+  socket.on("disconnect", () => {
+    //@ts-ignore
+    io.to(socket.handshake.user?._id.toString()).emit(
+      "disconnection",
+      "user disconnected"
+    );
+  });
+});
 server.listen(port, () => {
   console.log(
     `<<---<<----- app running on port ${port} in ${environment} ----->>--->>`

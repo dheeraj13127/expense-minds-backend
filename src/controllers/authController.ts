@@ -35,40 +35,47 @@ export const authenticateUser = async (req: any, res: any) => {
         message: "Authenticated Successfully",
       });
     } else {
-      const newUser = await UserSchema.create({
-        name: name,
-        email: email,
-      });
+      const newUser = await UserSchema.create(
+        [
+          {
+            name: name,
+            email: email,
+          },
+        ],
+        { session: session }
+      );
       const usdCurrency = await CurrencySchema.findOne({
         name: "USD",
         country: "USA",
       });
       const addUserCurrency = await UserSchema.updateOne(
-        { _id: newUser._id },
+        { _id: newUser[0]._id },
+
         {
           currency: usdCurrency?._id,
         },
-        { upsert: true }
+
+        { session, upsert: true }
       );
       const addUserCategories = await UserSchema.updateOne(
-        { _id: newUser._id },
+        { _id: newUser[0]._id },
         {
           $push: {
             "categories.expense": { $each: initialExpenseCategoriesData },
             "categories.income": { $each: initialIncomeCategoriesData },
           },
         },
-        { upsert: true }
+        { session, upsert: true }
       );
       const addUserAccounts = await UserSchema.updateOne(
-        { _id: newUser._id },
+        { _id: newUser[0]._id },
         {
           $push: { accounts: { $each: initialAccountsData } },
         },
-        { upsert: true }
+        { session, upsert: true }
       );
       await session.commitTransaction();
-      const userToken = sign({ id: newUser._id }, "7d");
+      const userToken = sign({ id: newUser[0]._id }, "7d");
 
       return res.status(200).json({
         userToken,
@@ -76,6 +83,7 @@ export const authenticateUser = async (req: any, res: any) => {
       });
     }
   } catch (err) {
+    console.log(err);
     await session.abortTransaction();
     return res.status(400).json({ message: "Authentication failed !" });
   } finally {

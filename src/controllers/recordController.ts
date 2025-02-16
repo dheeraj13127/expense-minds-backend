@@ -13,7 +13,6 @@ import {
   getLatestRecordsForDaily,
   getLatestRecordsForMonthly,
 } from "../utils/recordHelpers/recordHelpers";
-import { openAiModel } from "../..";
 
 const monthsRange = [
   "01",
@@ -40,18 +39,23 @@ export const createNewRecord = async (req: any, res: any) => {
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    const newRecord = await RecordSchema.create({
-      userId,
-      amount,
-      category,
-      amountType,
-      account,
-      note,
-    });
+    const newRecord = await RecordSchema.create(
+      [
+        {
+          userId,
+          amount,
+          category,
+          amountType,
+          account,
+          note,
+        },
+      ],
+      { session }
+    );
     const updatedRecord = await RecordSchema.findByIdAndUpdate(
-      { _id: newRecord._id },
+      { _id: newRecord[0]._id },
       { createdAt: createdAt },
-      { new: true, upsert: true }
+      { session, new: true, upsert: true }
     );
 
     await session.commitTransaction();
@@ -68,8 +72,6 @@ export const createNewRecord = async (req: any, res: any) => {
 };
 
 export const getRecordsByDay = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { day } = req.query;
     const { error } = getRecordByDayValidation.validate(req.query);
@@ -164,22 +166,15 @@ export const getRecordsByDay = async (req: any, res: any) => {
       },
     ]);
 
-    await session.commitTransaction();
-
     return res
       .status(200)
       .json({ message: "Fetched records successfully", result: recordsByDay });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const getRecordsByMonth = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { month } = req.query;
     const { error } = getRecordByMonthValidation.validate(req.query);
@@ -329,23 +324,18 @@ export const getRecordsByMonth = async (req: any, res: any) => {
         },
       },
     ]);
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Fetched records successfully",
       result: recordsByMonth,
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const getRecordsBySummary = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { day } = req.query;
     const { error } = getRecordBySummaryValidation.validate(req.query);
@@ -437,22 +427,17 @@ export const getRecordsBySummary = async (req: any, res: any) => {
         },
       },
     ]);
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Fetched records successfully",
       result: recordsBySumary,
     });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const updateIndividualRecord = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   const { _id, amount, category, amountType, account, note, recordType } =
     req.body.data;
   try {
@@ -499,23 +484,17 @@ export const updateIndividualRecord = async (req: any, res: any) => {
         updatedMonth
       );
     }
-    await session.commitTransaction();
 
     return res.status(200).json({
       message: "Updated record successfully",
       records: latestRecords[0],
     });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const deleteIndividualRecord = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   const { id, recordType } = req.query;
   try {
     const { error } = deleteRecordValidation.validate(req.query);
@@ -550,15 +529,12 @@ export const deleteIndividualRecord = async (req: any, res: any) => {
         updatedMonth
       );
     }
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Deleted record successfully",
       records: latestRecords[0],
     });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };

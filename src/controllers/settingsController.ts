@@ -10,8 +10,6 @@ import {
 import { UserSchema } from "../models/UserSchema";
 
 export const createCategory = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { categoryName, categorySymbol, categoryType } = req.body.data;
     const { error } = createCategoryValidation.validate(req.body.data);
@@ -50,7 +48,7 @@ export const createCategory = async (req: any, res: any) => {
         { new: true, upsert: true }
       );
     }
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Created category successfully",
       result:
@@ -60,16 +58,12 @@ export const createCategory = async (req: any, res: any) => {
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
+
     return res.status(400).json({ message: "Failed to create category !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const updateCategory = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { categoryName, categorySymbol, categoryType, _id } = req.body.data;
     const { error } = updateCategoryValidation.validate(req.body.data);
@@ -107,7 +101,7 @@ export const updateCategory = async (req: any, res: any) => {
         { new: true, upsert: true }
       );
     }
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Updated category successfully",
       result:
@@ -121,16 +115,11 @@ export const updateCategory = async (req: any, res: any) => {
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to update category !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const deleteCategory = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { id, categoryType } = req.query;
     const { error } = deleteCategoryValidation.validate(req.query);
@@ -167,22 +156,18 @@ export const deleteCategory = async (req: any, res: any) => {
         { new: true, upsert: true }
       );
     }
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Deleted category successfully",
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
+
     return res.status(400).json({ message: "Failed to delete category !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const createSubAccount = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { groupId, name, description, amount } = req.body.data;
     const { error } = createSubAccountValidation.validate(req.body.data);
@@ -206,23 +191,18 @@ export const createSubAccount = async (req: any, res: any) => {
       { new: true, upsert: true }
     );
 
-    await session.commitTransaction();
     return res.status(200).json({
       message: "Created sub account successfully",
       result: createdSubAccount.accounts,
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
+
     return res.status(400).json({ message: "Failed to create sub account !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const updateSubAccount = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { _id, groupId, name, description, amount } = req.body.data;
     const { error } = updateSubAccountValidation.validate(req.body.data);
@@ -249,7 +229,6 @@ export const updateSubAccount = async (req: any, res: any) => {
       }
     );
 
-    await session.commitTransaction();
     return res.status(200).json({
       message: "Updated sub account successfully",
       result: updatedSubAccount.accounts
@@ -258,16 +237,11 @@ export const updateSubAccount = async (req: any, res: any) => {
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to update sub account !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const deleteSubAccount = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { id, groupId } = req.query;
     const { error } = deleteSubAccountValidation.validate(req.query);
@@ -292,15 +266,11 @@ export const deleteSubAccount = async (req: any, res: any) => {
       }
     );
 
-    await session.commitTransaction();
     return res.status(200).json({
       message: "Deleted sub account successfully",
     });
   } catch (err) {
     console.log(err);
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to delete sub account !" });
-  } finally {
-    await session.endSession();
   }
 };

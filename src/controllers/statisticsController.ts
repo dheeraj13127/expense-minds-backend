@@ -6,8 +6,6 @@ import {
 } from "../joi/statisticsJOI";
 
 export const getStatisticsMonthly = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { month, amountType } = req.query;
     const { error } = getStatisticsMonthlyValidation.validate(req.query);
@@ -149,22 +147,17 @@ export const getStatisticsMonthly = async (req: any, res: any) => {
         },
       },
     ]);
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Fetched records successfully",
       result: statisticsMonthly,
     });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
 
 export const getStatisticsYearly = async (req: any, res: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
     const { year, amountType } = req.query;
     const { error } = getStatisticsYearlyValidation.validate(req.query);
@@ -306,15 +299,12 @@ export const getStatisticsYearly = async (req: any, res: any) => {
         },
       },
     ]);
-    await session.commitTransaction();
+
     return res.status(200).json({
       message: "Fetched records successfully",
       result: statisticsMonthly,
     });
   } catch (err) {
-    await session.abortTransaction();
     return res.status(400).json({ message: "Failed to fetch records !" });
-  } finally {
-    await session.endSession();
   }
 };
