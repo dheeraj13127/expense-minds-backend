@@ -23,6 +23,7 @@ import { Server, Socket } from "socket.io";
 import { authenticateSocketUser } from "./src/controllers/userController";
 import { createConversation, dmUser } from "./src/controllers/socketController";
 import { chatRouter } from "./src/routes/chat";
+import { pineconeRouter } from "./src/routes/pinecone";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -67,11 +68,12 @@ app.use("/api/statistics", statisticsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/automated", automatedRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/pinecone", pineconeRouter);
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 const db = process.env.DATABASE;
 const environment = process.env.NODE_ENV;
-let pinecone;
+let pinecone: Pinecone;
 //@ts-ignore
 mongoose.connect(db).then((conn) => {
   console.log("<------- Successfully connected to DB ! ------->");
@@ -82,6 +84,17 @@ async function initializePinecone() {
     pinecone = new Pinecone({
       apiKey: process.env.PINECONE_API_KEY!,
     });
+    // await pinecone.createIndex({
+    //   name: "records",
+    //   dimension: 3072,
+    //   metric: "cosine",
+    //   spec: {
+    //     serverless: {
+    //       cloud: "aws",
+    //       region: "us-east-1",
+    //     },
+    //   },
+    // });
     console.log("<+++++++ Successfully connected to pinecone +++++++>");
   } catch (err) {
     console.log(err);
@@ -92,7 +105,6 @@ initializePinecone();
 const openAiModel = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const embeddings = new OpenAIEmbeddings({
   apiKey: process.env.OPENAI_API_KEY,
-  batchSize: 512,
   model: "text-embedding-3-large",
 });
 

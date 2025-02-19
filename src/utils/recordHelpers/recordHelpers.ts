@@ -302,3 +302,100 @@ export const getLatestRecordsForMonthly = async (
     throw err;
   }
 };
+
+export const getDayRecordsForPineCone = async (
+  userId: string
+): Promise<recordsType[]> => {
+  try {
+    const recordsByDay = await RecordSchema.aggregate([
+      {
+        $match: {
+          userId,
+        },
+      },
+      {
+        $addFields: {
+          yearAndMonth: {
+            $dateToString: { format: "%Y-%m", date: "$createdAt" },
+          },
+          day: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+        },
+      },
+      // {
+      //   $match: {
+      //     yearAndMonth: day,
+      //   },
+      // },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: "$yearAndMonth",
+          expense: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "expense"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          income: {
+            $sum: {
+              $cond: [
+                {
+                  $eq: ["$amountType", "income"],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          records: {
+            $push: {
+              _id: "$_id",
+              amount: "$amount",
+              category: "$category",
+              amountType: "$amountType",
+              account: "$account",
+              note: "$note",
+              date: "$day",
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          _id: -1,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalExpenseSum: { $sum: "$expense" },
+          totalIncomeSum: { $sum: "$income" },
+          data: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $addFields: {
+          netTotal: {
+            $subtract: ["$totalIncomeSum", "$totalExpenseSum"],
+          },
+        },
+      },
+    ]);
+    return recordsByDay;
+  } catch (err) {
+    throw err;
+  }
+};

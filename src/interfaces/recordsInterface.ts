@@ -14,6 +14,7 @@ interface recordsType {
       amountType: string;
       account: string;
       note: string;
+      date?: string;
     }[];
   }[];
 }
