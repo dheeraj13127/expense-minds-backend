@@ -7,7 +7,8 @@ export const indexRecordsToPineCone = async (req: any, res: any) => {
   try {
     const userId = req.user._id;
     const records: recordsType[] = await getDayRecordsForPineCone(req.user._id);
-    const index = pinecone.Index("records");
+    const indexName = process.env?.PINCECONE_INDEX_NAME;
+    const index = pinecone.Index(indexName ? indexName : "");
 
     const formattedText = records
       .map((rec) => {
@@ -26,12 +27,14 @@ export const indexRecordsToPineCone = async (req: any, res: any) => {
         return `The user's overall total expense is ${rec.totalExpenseSum}$ ,with overall total income as ${rec.totalIncomeSum}$ and the computed overall net total is ${rec.netTotal}$. Now the records are categorised under each month along with respective year as follows: ${groupedRecords}`;
       })
       .join("\n ");
+
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 512,
       chunkOverlap: 100,
     });
     // Breakdown the formatted text into smaller chunks
     const textChunks = await splitter.splitText(formattedText);
+
     // Create the embeddings of the chunks to store in pinecone
     const textEmbeddings = await embeddings.embedDocuments(textChunks);
 
