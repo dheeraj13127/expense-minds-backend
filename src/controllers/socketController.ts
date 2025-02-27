@@ -11,8 +11,7 @@ import {
 export const generateBotReply = async (
   previousChats: any,
   userId: string,
-  lastMessage: any,
-  conversationId: string
+  lastMessage: any
 ) => {
   try {
     const indexName = process.env?.PINCECONE_INDEX_NAME;
@@ -138,8 +137,7 @@ export const dmUser = (socket: Socket, io: Server) => async (data: any) => {
     const messageResponse = await generateBotReply(
       previousChats,
       userId,
-      newMessage[0],
-      conversation
+      newMessage[0]
     );
     const botMessage = await MessageSchema.create(
       [
