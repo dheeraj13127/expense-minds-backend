@@ -69,6 +69,9 @@ app.use("/api/settings", settingsRouter);
 app.use("/api/automated", automatedRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/pinecone", pineconeRouter);
+app.get("/", (req: any, res: any) => {
+  res.send("Expense Minds");
+});
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 const db = process.env.DATABASE;
