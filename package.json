@@ -1,12 +1,13 @@
 {
   "name": "ai-expense-tracker-backend",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "env-cmd -f .env.development nodemon index.ts ./src/**/*",
     "start": "env-cmd -f .env.production node index.ts",
-    "prod": "env-cmd -f .env.production nodemon index.ts"
+    "prod": "env-cmd -f .env.production nodemon index.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",

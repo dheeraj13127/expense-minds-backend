@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { Server, Socket } from "socket.io";
 import { ConversationSchema } from "../models/ConversationSchema";
 import { MessageSchema } from "../models/MessageSchema";
-import { embeddings, openAiModel, pinecone } from "../..";
+import { embeddings, openAiModel, pinecone } from "../../index";
 import {
   botAnswerPromptTemplate,
   standAloneQuestionPromptTemplate,

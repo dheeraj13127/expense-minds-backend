@@ -1,4 +1,4 @@
-import { embeddings, pinecone } from "../..";
+import { embeddings, pinecone } from "../../index";
 import { recordsType } from "../interfaces/recordsInterface";
 import { getDayRecordsForPineCone } from "../utils/recordHelpers/recordHelpers";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
