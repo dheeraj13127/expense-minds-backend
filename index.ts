@@ -24,7 +24,7 @@ import { authenticateSocketUser } from "./src/controllers/userController";
 import { createConversation, dmUser } from "./src/controllers/socketController";
 import { chatRouter } from "./src/routes/chat";
 import { pineconeRouter } from "./src/routes/pinecone";
-
+import { VercelRequest, VercelResponse } from "@vercel/node";
 const app = express();
 app.use(
   bodyParser.urlencoded({
@@ -73,7 +73,9 @@ app.use("/api/pinecone", pineconeRouter);
 app.get("/", (req: any, res: any) => {
   res.send("Expense Minds");
 });
-
+export default (req: VercelRequest, res: VercelResponse) => {
+  app(req, res); // Serverless handler
+};
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 const db = process.env.DATABASE;
@@ -118,6 +120,7 @@ const io = new Server(server, {
     origin: process.env.CLIENT_URL,
     methods: ["GET", "POST"],
   },
+  addTrailingSlash: false,
 });
 
 io.use(authenticateSocketUser).on("connection", (socket: Socket) => {
