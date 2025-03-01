@@ -17,7 +17,7 @@ export const indexRecordsToPineCone = async (req: any, res: any) => {
             const records = month.records
               .map(
                 (record) =>
-                  `${record.amountType} of ${record.amount}$ in the category ${record.category} on ${record.date} using ${record.account}`
+                  `${record.amountType} of ${record.amount}$ in the category ${record.category} on ${record.date} using ${record.account} and with a description saying ${record.note}`
               )
               .join(", ");
 
@@ -27,7 +27,7 @@ export const indexRecordsToPineCone = async (req: any, res: any) => {
         return `The user's overall total expense is ${rec.totalExpenseSum}$ ,with overall total income as ${rec.totalIncomeSum}$ and the computed overall net total is ${rec.netTotal}$. Now the records are categorised under each month along with respective year as follows: ${groupedRecords}`;
       })
       .join("\n ");
-
+    console.log(formattedText);
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 512,
       chunkOverlap: 100,
