@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "env-cmd -f .env.development nodemon index.ts ./src/**/*",
     "start": "nodemon index.ts",
-    "prod": "env-cmd -f .env.production nodemon index.ts ./src/**/*",
+    "prod": "nodemon index.ts ./src/**/*",
     "build": "tsc"
   },
   "keywords": [],
