@@ -134,7 +134,7 @@ io.use(authenticateSocketUser).on("connection", (socket: Socket) => {
     );
   });
 });
-server.listen(port || 3000, () => {
+server.listen(port, () => {
   console.log(
     `<<---<<----- app running on port ${port} in ${environment} ----->>--->>`
   );
